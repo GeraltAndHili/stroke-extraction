@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 
 data/dataset/RHSEDB/
+data/dataset/NPZ4_1/
 data/dataset/cha_strokes/
 data/prepared/
 data/dataset/data_anal/*
