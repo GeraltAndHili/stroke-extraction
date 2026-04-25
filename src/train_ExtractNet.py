@@ -164,24 +164,24 @@ class TrainExtractNet():
 
         # dataset
         train_loader = data.DataLoader(SegNetExtractNetLoader(is_training=True, dataset_path=dataset, is_single=True), batch_size=1, shuffle=True)
-        test_loader = data.DataLoader(SegNetExtractNetLoader(is_training=False, dataset_path=dataset, is_single=True), batch_size=1)
+        val_loader = data.DataLoader(SegNetExtractNetLoader(is_training=False, dataset_path=dataset, is_single=True), batch_size=1)
         optim_op = optim.Adam(self.extract_net.parameters(), lr=init_learning_rate, betas=(0.5, 0.999))
         lr_scheduler_op = optim.lr_scheduler.ExponentialLR(optim_op, gamma=0.5)
 
         train_history_loss = []
-        test_history_loss = []
+        val_history_loss = []
 
         for i in range(epochs):
             print("Start training the %d epoch" % (i + 1))
             train_loss, loss_name = self.__train_epoch(i, train_loader, optim_op)
-            test_loss, loss_name = self.__val_epoch(i, test_loader)
+            val_loss, loss_name = self.__val_epoch(i, val_loader)
             train_history_loss.append(train_loss)
-            test_history_loss.append(test_loss)
+            val_history_loss.append(val_loss)
             for index, name in enumerate(loss_name):
                 train_data = [x[index] for x in train_history_loss]
-                test_data = [x[index] for x in test_history_loss]
-                self.__plot_loss(name+'stage2.png', [train_data, test_data],
-                               legend=['train', 'test'], folder_name=self.Out_path_loss)
+                val_data = [x[index] for x in val_history_loss]
+                self.__plot_loss(name+'stage2.png', [train_data, val_data],
+                               legend=['train', 'val'], folder_name=self.Out_path_loss)
             # save models
             self.save_model_parameter(i)
             if (i+1)%5 == 0:
@@ -417,13 +417,13 @@ class TrainExtractNet():
 
         return loss_value, loss_name
 
-    def __val_epoch(self, epoch, test_loader):
+    def __val_epoch(self, epoch, val_loader):
         epoch += 1
         self.extract_net.eval()
         loss_list = []
         start_time = time.time()
 
-        for i, batch_sample in enumerate(test_loader):
+        for i, batch_sample in enumerate(val_loader):
             # get data
             reference_color = batch_sample['reference_color'].float().cuda()
             reference_segment_transformation_data = batch_sample['reference_segment_transformation_data'].float().cuda()
@@ -502,8 +502,8 @@ class TrainExtractNet():
         loss_name = ['loss', 'mIOUm', 'mIOUum']
 
         print(
-            "[TEST][{}/{}], loss={:.7f},  mIOUm={:.7f}, mIOUum={:.7f}, time={:.7f}".format(
-                i, len(test_loader), loss_value[0], loss_value[1], loss_value[2], time.time() - start_time))
+            "[VAL][{}/{}], loss={:.7f},  mIOUm={:.7f}, mIOUum={:.7f}, time={:.7f}".format(
+                i, len(val_loader), loss_value[0], loss_value[1], loss_value[2], time.time() - start_time))
         return loss_value, loss_name
 
 

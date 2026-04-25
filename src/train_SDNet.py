@@ -60,26 +60,35 @@ class TrainSDNet():
 
     def train_model(self, epochs=40,  batch_size=16, init_learning_rate=0.001):
         self.batch_size = batch_size
-        train_loader = data.DataLoader(SDNetLoader(is_training=True, dataset_path=self.dataset), batch_size=batch_size, shuffle=True)
-        test_loader = data.DataLoader(SDNetLoader(is_training=False, dataset_path=self.dataset), batch_size=batch_size)
+        train_loader = data.DataLoader(
+            SDNetLoader(is_training=True, dataset_path=self.dataset),
+            batch_size=batch_size,
+            shuffle=True,
+            drop_last=True,
+        )
+        val_loader = data.DataLoader(
+            SDNetLoader(is_training=False, dataset_path=self.dataset),
+            batch_size=batch_size,
+            drop_last=True,
+        )
 
         optim_op = optim.Adam(self.sd_net.parameters(), lr=init_learning_rate, betas=(0.5, 0.999))
         lr_scheduler_op = optim.lr_scheduler.ExponentialLR(optim_op, gamma=0.5)
 
         train_history_loss = []
-        test_history_loss = []
+        val_history_loss = []
 
         for i in range(epochs):
             print("Start training the %d epoch" % (i + 1))
             train_loss, loss_name = self.__train_epoch(i, train_loader, optim_op)
-            test_loss, loss_name = self.__val_epoch(i, test_loader)
+            val_loss, loss_name = self.__val_epoch(i, val_loader)
             # save loss
             train_history_loss.append(train_loss)
-            test_history_loss.append(test_loss)
+            val_history_loss.append(val_loss)
             for index, name in enumerate(loss_name):
                 train_data = [x[index] for x in train_history_loss]
-                test_data = [x[index] for x in test_history_loss]
-                self.__plot_loss(name+'.png', [train_data, test_data], legend=['train', 'test'])
+                val_data = [x[index] for x in val_history_loss]
+                self.__plot_loss(name+'.png', [train_data, val_data], legend=['train', 'val'])
             # save model
             self.save_model_parameter(i)
             if (i+1)%10 == 0:
@@ -170,9 +179,6 @@ class TrainSDNet():
         start_time = time.time()
 
         for i, batch_sample in enumerate(train_loader):
-            if batch_sample['target_data'].size(0) != self.batch_size:
-                print('Batch size error!')
-                continue
             # get data
             target_single_stroke = batch_sample['target_single_stroke'].cuda().float()
             reference_single_stroke = batch_sample['reference_single_stroke'].cuda().float()
@@ -226,7 +232,7 @@ class TrainSDNet():
         loss_name = ['loss_sum', 'content_loss_global', 'content_loss_single_linear', 'smooth_loss_global']
         return loss_value, loss_name
 
-    def __val_epoch(self, epoch, test_loader):
+    def __val_epoch(self, epoch, val_loader):
         epoch += 1
         self.sd_net.eval()
 
@@ -234,10 +240,7 @@ class TrainSDNet():
         loss_list = []
 
         start_time = time.time()
-        for i, batch_sample in enumerate(test_loader):
-            if batch_sample['target_data'].size(0) != self.batch_size:
-                print('Batch size error!')
-                continue
+        for i, batch_sample in enumerate(val_loader):
             # get data
             target_single_stroke = batch_sample['target_single_stroke'].cuda().float()
             reference_single_stroke = batch_sample['reference_single_stroke'].cuda().float()
@@ -283,8 +286,8 @@ class TrainSDNet():
         loss_value = np.mean(np.array(loss_list), axis=0)
         loss_name = ['loss_sum', 'content_loss_global', 'content_loss_single_linear', 'smooth_loss_global']
         print(
-            "[TEST][{}/{}], loss_sum={:.7f},  content_loss_global={:.7f}, content_loss_single_linear={:.7f}, smooth_loss_global={:.7f}, time={:.3f}".format(
-                i, len(test_loader), loss_value[0], loss_value[1], loss_value[2],
+            "[VAL][{}/{}], loss_sum={:.7f},  content_loss_global={:.7f}, content_loss_single_linear={:.7f}, smooth_loss_global={:.7f}, time={:.3f}".format(
+                i, len(val_loader), loss_value[0], loss_value[1], loss_value[2],
                 loss_value[3], time.time() - start_time))
         return loss_value, loss_name
 
