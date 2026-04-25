@@ -52,6 +52,12 @@ class TrainSDNet():
         state_stn = {'net': self.sd_net.state_dict(), 'start_epoch': epoch}
         torch.save(state_stn, os.path.join(self.Model_path, 'sdnet_model.pth'))
 
+    def load_model_parameter(self, model_path):
+        state = torch.load(model_path, map_location='cpu')
+        self.sd_net.load_state_dict(state['net'])
+        self.sd_net.cuda()
+        print(f'Loaded SDNet parameters from {model_path}')
+
     def train_model(self, epochs=40,  batch_size=16, init_learning_rate=0.001):
         self.batch_size = batch_size
         train_loader = data.DataLoader(SDNetLoader(is_training=True, dataset_path=self.dataset), batch_size=batch_size, shuffle=True)

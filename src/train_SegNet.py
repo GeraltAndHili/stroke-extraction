@@ -51,6 +51,12 @@ class TrainSegNet():
         state_stn = {'net': self.seg_net.state_dict(), 'start_epoch': epoch}
         torch.save(state_stn, os.path.join(self.Model_path, 'model.pth'))
 
+    def load_model_parameter(self, model_path):
+        state = torch.load(model_path, map_location='cpu')
+        self.seg_net.load_state_dict(state['net'])
+        self.seg_net.to('cuda')
+        print(f'Loaded SegNet parameters from {model_path}')
+
     def train_model(self, epochs=40,  batch_size=16, init_learning_rate=0.001, dataset_path = None):
         self.batch_size = batch_size
         dataset_path = dataset_path or self.dataset_path

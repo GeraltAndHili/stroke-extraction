@@ -147,6 +147,12 @@ class TrainExtractNet():
         state_stn = {'net': self.extract_net.state_dict(), 'start_epoch': epoch}
         torch.save(state_stn, os.path.join(self.Model_path, 'model_extract.pth'))
 
+    def load_model_parameter(self, model_path):
+        state = torch.load(model_path, map_location='cpu')
+        self.extract_net.load_state_dict(state['net'])
+        self.extract_net.cuda()
+        print(f'Loaded ExtractNet parameters from {model_path}')
+
     def train_model(self, epochs=40, batch_size=16, init_learning_rate=0.001, dataset=None):
         self.batch_size = batch_size
         dataset = dataset or self.dataset_path

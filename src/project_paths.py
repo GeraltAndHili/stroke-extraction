@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 
 SRC_ROOT = Path(__file__).resolve().parent
@@ -24,8 +25,11 @@ def raw_dataset_dir(dataset_name: str) -> Path:
     return RAW_DATA_ROOT / dataset_name
 
 
-def prepared_dataset_dir(dataset_name: str) -> Path:
-    return PREPARED_DATA_ROOT / f"dataset_forSegNet_ExtractNet_{dataset_name}"
+def prepared_dataset_dir(dataset_name: str, variant: Optional[str] = None) -> Path:
+    name = f"dataset_forSegNet_ExtractNet_{dataset_name}"
+    if variant:
+        name = f"{name}_{variant}"
+    return PREPARED_DATA_ROOT / name
 
 
 def training_model_dir(run_name: str) -> Path:
@@ -34,3 +38,10 @@ def training_model_dir(run_name: str) -> Path:
 
 def training_output_dir(run_name: str) -> Path:
     return TRAINING_OUTPUT_ROOT / run_name
+
+
+def build_run_name(stage_name: str, dataset_name: str, variant: Optional[str] = None) -> str:
+    run_name = f"{stage_name}_{dataset_name}"
+    if variant:
+        run_name = f"{run_name}_{variant}"
+    return run_name
