@@ -8,5 +8,11 @@ data/prepared/
 data/dataset/data_anal/*
 !data/dataset/data_anal/image_to_npy_guide.md
 
-artifacts/
+artifacts/*
+!artifacts/models/
+artifacts/models/*
+!artifacts/models/inference/
+artifacts/models/inference/*
+!artifacts/models/inference/*.pth
+
 logs/
