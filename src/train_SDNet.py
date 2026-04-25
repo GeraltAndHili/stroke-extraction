@@ -12,6 +12,7 @@ from utils import save_picture, apply_stroke, seg_colors
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import numpy as np
 import matplotlib.pyplot as plt
+from project_paths import prepared_dataset_dir, raw_dataset_dir, training_model_dir, training_output_dir
 
 
 class TrainSDNet():
@@ -20,12 +21,14 @@ class TrainSDNet():
         validate SDNet with the Test-Dataset
     '''
 
-    def __init__(self, save_path=None, dataset=None):
+    def __init__(self, dataset=None, run_name=None):
         super().__init__()
-        self.Out_path_train = os.path.join(save_path+'_'+dataset, 'train')
-        self.Out_path_val = os.path.join(save_path + '_' + dataset, 'val')
-        self.Model_path = os.path.join(save_path+'_'+dataset, 'model')
-        self.Out_path_loss = os.path.join(save_path+'_'+dataset, 'loss')
+        run_name = run_name or f'SDNet_{dataset}'
+        output_root = training_output_dir(run_name)
+        self.Out_path_train = str(output_root / 'train')
+        self.Out_path_val = str(output_root / 'val')
+        self.Model_path = str(training_model_dir(run_name))
+        self.Out_path_loss = str(output_root / 'loss')
         if not os.path.exists(self.Out_path_val):
             os.makedirs(self.Out_path_val)
         if not os.path.exists(self.Model_path):
@@ -34,7 +37,9 @@ class TrainSDNet():
             os.makedirs(self.Out_path_train)
         if not os.path.exists(self.Out_path_loss):
             os.makedirs(self.Out_path_loss)
-        self.dataset = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'dataset', dataset)
+        self.dataset_name = dataset
+        self.dataset = str(raw_dataset_dir(dataset))
+        self.prepared_dataset_path = str(prepared_dataset_dir(dataset))
 
         # ContentLoss
         self.content_loss = ContentLoss().cuda()
@@ -114,7 +119,7 @@ class TrainSDNet():
 
             affine_grid = self.sd_net.get_linear_estimation(reference_stroke_, grid_,
                                                              reference_single_stroke_centroid[i, :int(stroke_num[i])])
-            affine_tran = F.grid_sample(target_stroke_, affine_grid)
+            affine_tran = F.grid_sample(target_stroke_, affine_grid, align_corners=False)
             c_loss_ = self.content_loss(affine_tran, reference_stroke_)
             content_loss = content_loss + c_loss_
             affine_tran_whole_ = torch.clip(torch.sum(affine_tran, dim=0, keepdim=True), 0, 1)
@@ -138,7 +143,7 @@ class TrainSDNet():
                 grid_ = grid_for_linear[i].unsqueeze(0)
                 linear_grid = self.sd_net.get_linear_estimation(reference_single_stroke_, grid_,
                                                                 reference_single_stroke_centroid[i][j], inverse=True)
-                linear_tran = F.grid_sample(reference_single_stroke_, linear_grid)
+                linear_tran = F.grid_sample(reference_single_stroke_, linear_grid, align_corners=False)
                 linear_tran_whole.append(linear_tran)
             transformed_single_reference_stroke.append(torch.cat(linear_tran_whole, dim=1).squeeze(0))
 
@@ -307,7 +312,7 @@ class TrainSDNet():
         np.save(os.path.join(save_path, str(save_num) + '_style_single.npy'),
                 style_single_image_save > 0.5)
 
-    def calculate_prior_information_and_qualitative(self, save_path):
+    def calculate_prior_information_and_qualitative(self, save_path=None):
         '''
         In Model Inference,
         get prior information and other data for training SegNet and ExtractNet.
@@ -316,6 +321,7 @@ class TrainSDNet():
         :param dataset:
         :return:
         '''
+        save_path = save_path or self.prepared_dataset_path
         save_train_dataset_path = os.path.join(save_path, 'train')
         save_test_dataset_path = os.path.join(save_path, 'test')
         save_qualitative_result_path = os.path.join(save_path, 'qualitative_result.txt')
@@ -413,8 +419,8 @@ class TrainSDNet():
 
 
 if __name__ == '__main__':
-    model = TrainSDNet(save_path='out/SDNet', dataset='CCSEDB')
+    model = TrainSDNet(dataset='CCSEDB')
     model.train_model(epochs=40, init_learning_rate=0.0001, batch_size=8)
-    model.calculate_prior_information_and_qualitative('dataset_forSegNet_ExtractNet_CCSEDB')
+    model.calculate_prior_information_and_qualitative()
 
 

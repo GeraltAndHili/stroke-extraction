@@ -14,15 +14,23 @@ some single stroke label images of the target image arranged in reference stroke
 In these images, writing track of the stroke is normalized to a width of 6
 pixels (the size of the stroke image is 256 pixels).  
 The RHSEDB is available at [Google Drive](https://drive.google.com/file/d/1Q8dxAgSUkLp8IDVdjb9RK4zwACFVhGvu/view?usp=drive_link). 
-Download the data and unzip, the path looks like:``./dataset/RHSEDB``.
+Download the data and unzip, the path looks like:``./data/dataset/RHSEDB``.
 
 ## Training
-The **VGG** model parameters of char recognise can be downloaded from [VGG-model](https://drive.google.com/file/d/1UgE1iYv4r6sPsjMRb84ACCCLe5nYZtTb/view?usp=drive_link). The path looks like:``./char_recognise/out_vgg_bn/model/model.pth``.<br>
-The **ContentNet** model parameters can be downloaded from [ContentNet-model](https://drive.google.com/file/d/1R2h-jDhv2pBHVEeBvFUfLH2jQ7qBCuXl/view?usp=drive_link). The path looks like:``./content_net_model/out/model_content.pth``.
+The **VGG** model parameters of char recognise can be downloaded from [VGG-model](https://drive.google.com/file/d/1UgE1iYv4r6sPsjMRb84ACCCLe5nYZtTb/view?usp=drive_link). The path looks like:``./artifacts/models/char_recognise/out_vgg_bn/model/model.pth``.<br>
+The **ContentNet** model parameters can be downloaded from [ContentNet-model](https://drive.google.com/file/d/1R2h-jDhv2pBHVEeBvFUfLH2jQ7qBCuXl/view?usp=drive_link). The path looks like:``./artifacts/models/content_net/out/model_content.pth``.
 
 
-Run 'main_train.py' to train the whole stroke extraction model. Or run 'train_ExtractNet.py', 
-'train_SDNet.py' and 'train_SegNet.py' selectively to train a single module. 
+Run `python src/main_train.py` to train the whole stroke extraction model. Or run
+`python src/train_ExtractNet.py`, `python src/train_SDNet.py`, and `python src/train_SegNet.py`
+to train a single module selectively.
+
+## Project Layout
+- `src/`: all training, inference, model, and utility code
+- `data/`: raw datasets and prepared intermediate datasets
+- `artifacts/models/`: pretrained weights, inference weights, and training checkpoints
+- `artifacts/outputs/`: training visualizations and inference outputs
+- `logs/`: runtime logs
 
 ## Requirements
     pytorch=1.9  

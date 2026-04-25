@@ -156,7 +156,8 @@ class stn(nn.Module):
         xs = xs.view(-1, 32 * 6 * 6)
         theta = self.fc_loc(xs)
         theta = theta.view(-1, 2, 3)
-        grid_ = F.affine_grid(theta, y.size())
-        y = F.grid_sample(y, grid_)
+        # Keep spatial transform behavior explicit on newer PyTorch versions.
+        grid_ = F.affine_grid(theta, y.size(), align_corners=False)
+        y = F.grid_sample(y, grid_, align_corners=False)
         return y
 

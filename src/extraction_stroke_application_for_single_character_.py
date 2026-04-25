@@ -12,6 +12,7 @@ from model.model_of_SegNet import SegNet
 from model.model_of_ExtractNet import ExtractNet
 from utils import seg_label_to7, seg_colors
 import colorsys
+from project_paths import INFERENCE_MODEL_ROOT, raw_dataset_dir
 
 '''
 Introduce:
@@ -54,20 +55,20 @@ class ExtractStroke():
     def __init__(self):
         # 加载sdnet
         self.sd_net = SDNet()
-        model_path = 'model/sdnet_model.pth'
+        model_path = INFERENCE_MODEL_ROOT / 'sdnet_model.pth'
         self.sd_net.load_state_dict(torch.load(model_path, map_location='cpu')['net'])
         self.sd_net.eval().requires_grad_(False).to(device)
         print('SDNet模型加载成功')
 
         self.seg_net = SegNet(out_feature=True)
-        seg_model_path = r'model/model.pth'
+        seg_model_path = INFERENCE_MODEL_ROOT / 'model.pth'
         state = torch.load(seg_model_path, map_location='cpu')
         self.seg_net.load_state_dict(state['net'])
         self.seg_net.eval().requires_grad_(False).to(device)
         print('SegNet模型加载成功')
 
         self.extract_net = ExtractNet()
-        extract_model = r'model/model_extract.pth'
+        extract_model = INFERENCE_MODEL_ROOT / 'model_extract.pth'
         state = torch.load(extract_model, map_location='cpu')
         self.extract_net.load_state_dict(state['net'])
         self.extract_net.to(device).eval().requires_grad_(False)
@@ -99,7 +100,7 @@ class ExtractStroke():
                 grid_ = grid_for_linear[i].unsqueeze(0)
                 linear_grid = self.sd_net.get_linear_estimation(reference_single_stroke_, grid_,
                                                                 reference_single_stroke_centroid[i][j], inverse=True)
-                linear_tran = F.grid_sample(reference_single_stroke_, linear_grid)
+                linear_tran = F.grid_sample(reference_single_stroke_, linear_grid, align_corners=False)
                 linear_tran_whole.append(linear_tran)
             transformed_single_reference_stroke.append(torch.cat(linear_tran_whole, dim=1).squeeze(0))
 
@@ -308,7 +309,7 @@ if __name__ == '__main__':
     model = ExtractStroke()
 
     # 所有输入的值都是ndarray格式，被归一化到（0， 1）之间，参数含义参见dataset的介绍
-    path = r'E:\DatasetForTrain\RHSEDB\test\1613.npz'
+    path = raw_dataset_dir('RHSEDB') / 'test' / '1613.npz'
     data = np.load(path)
     print(data['name'])
 

@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import save_picture, random_colors, apply_stroke
 from utils_loss_val import get_mean_IOU
+from project_paths import prepared_dataset_dir, training_model_dir, training_output_dir
 
 
 seg_colors = random_colors(7)
@@ -22,12 +23,15 @@ class TrainSegNet():
         validate SegNet with the Test-Dataset
     '''
 
-    def __init__(self,  save_path=None):
+    def __init__(self, dataset=None, run_name=None):
         super().__init__()
-        self.Out_path_train = os.path.join(save_path, 'train')
-        self.Model_path = os.path.join(save_path, 'model')
-        self.Out_path_val = os.path.join(save_path, 'val')
-        self.Out_path_loss = os.path.join(save_path, 'loss')
+        run_name = run_name or f'SegNet_{dataset}'
+        output_root = training_output_dir(run_name)
+        self.Out_path_train = str(output_root / 'train')
+        self.Model_path = str(training_model_dir(run_name))
+        self.Out_path_val = str(output_root / 'val')
+        self.Out_path_loss = str(output_root / 'loss')
+        self.dataset_path = str(prepared_dataset_dir(dataset))
 
         if not os.path.exists(self.Model_path):
             os.makedirs(self.Model_path)
@@ -49,6 +53,7 @@ class TrainSegNet():
 
     def train_model(self, epochs=40,  batch_size=16, init_learning_rate=0.001, dataset_path = None):
         self.batch_size = batch_size
+        dataset_path = dataset_path or self.dataset_path
         train_loader = data.DataLoader(SegNetExtractNetLoader(is_training=True, dataset_path=dataset_path), batch_size=batch_size, shuffle=True)
         test_loader = data.DataLoader(SegNetExtractNetLoader(is_training=False, dataset_path=dataset_path), batch_size=batch_size)  # 24涓敤浜庢祴璇?
 
@@ -203,7 +208,8 @@ class TrainSegNet():
         '''
         images = []
         for i in range(self.batch_size):
-            image = np.zeros(shape=(256, 256, 3) ,dtype=np.float)
+            # NumPy 2.x removed the np.float alias.
+            image = np.zeros(shape=(256, 256, 3) ,dtype=np.float32)
             for j in range(7):
                 image = apply_stroke(image, seg_result[i, j].detach().to('cpu').numpy()>0.5, seg_colors[j])
             images.append(image.transpose((2,0,1)))
@@ -211,6 +217,6 @@ class TrainSegNet():
 
 
 if __name__ == '__main__':
-    model = TrainSegNet(save_path=os.path.join('out/SegNet_CCSEDB'))
-    model.train_model(epochs=10, init_learning_rate=0.0001, batch_size=8, dataset_path=r'dataset_forSegNet_ExtractNet_CCSEDB')
+    model = TrainSegNet(dataset='CCSEDB')
+    model.train_model(epochs=10, init_learning_rate=0.0001, batch_size=8)
 

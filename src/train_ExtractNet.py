@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from torchvision.transforms import Resize
 from utils import random_colors, apply_stroke_t, save_picture, seg_colors, apply_stroke, seg_label_to7
 from utils_loss_val import get_iou_without_matching, get_iou_with_matching
+from project_paths import prepared_dataset_dir, training_model_dir, training_output_dir
 
 
 class DataPool(object):
@@ -110,13 +111,17 @@ class TrainExtractNet():
         validate SDNet with the Test-Dataset
     '''
 
-    def __init__(self,  save_path=None, segNet_save_path=None):
+    def __init__(self, dataset=None, run_name=None, segnet_run_name=None):
         super().__init__()
-        self.segNet_save_path = segNet_save_path
-        self.Out_path_train = os.path.join(save_path, 'train')
-        self.Model_path = os.path.join(save_path, 'model')
-        self.Out_path_loss = os.path.join(save_path, 'loss')
-        self.Out_path_val = os.path.join(save_path, 'val')
+        run_name = run_name or f'ExtractNet_{dataset}'
+        segnet_run_name = segnet_run_name or f'SegNet_{dataset}'
+        output_root = training_output_dir(run_name)
+        self.seg_model_path = str(training_model_dir(segnet_run_name) / 'model.pth')
+        self.Out_path_train = str(output_root / 'train')
+        self.Model_path = str(training_model_dir(run_name))
+        self.Out_path_loss = str(output_root / 'loss')
+        self.Out_path_val = str(output_root / 'val')
+        self.dataset_path = str(prepared_dataset_dir(dataset))
         if not os.path.exists(self.Model_path):
             os.makedirs(self.Model_path)
         if not os.path.exists(self.Out_path_train):
@@ -144,10 +149,10 @@ class TrainExtractNet():
 
     def train_model(self, epochs=40, batch_size=16, init_learning_rate=0.001, dataset=None):
         self.batch_size = batch_size
+        dataset = dataset or self.dataset_path
 
         # load parameters of SegNet
-        seg_model_path = os.path.join(self.segNet_save_path, 'model', 'model.pth')
-        state = torch.load(seg_model_path)
+        state = torch.load(self.seg_model_path)
         self.seg_net.load_state_dict(state['net'])
         self.seg_net.to('cuda').eval().requires_grad_(False)
 
@@ -451,10 +456,11 @@ class TrainExtractNet():
             loss_list.append([loss.item(), mIOUm.item(), mIOUum.item()])
             if (i+1)%5==0 and (epoch+1)%1==0:
                 # save data
-                extract_result_show = np.zeros(shape=(256, 256, 3), dtype=np.float) + target_data_o.squeeze().detach().to(
+                # NumPy 2.x removed the np.float alias.
+                extract_result_show = np.zeros(shape=(256, 256, 3), dtype=np.float32) + target_data_o.squeeze().detach().to(
                                                     'cpu').numpy().transpose(1, 2, 0)
 
-                label_result_show = np.zeros(shape=(256, 256, 3),dtype=np.float) + target_data_o.squeeze().detach().to(
+                label_result_show = np.zeros(shape=(256, 256, 3),dtype=np.float32) + target_data_o.squeeze().detach().to(
                                                         'cpu').numpy().transpose(1, 2, 0)
 
                 r_colors = random_colors(len(extract_result))
@@ -499,5 +505,5 @@ class TrainExtractNet():
 
 
 if __name__ == '__main__':
-    model = TrainExtractNet(save_path='out/ExtractNet_CCSEDB', segNet_save_path='out/SegNet_CCSEDB')
-    model.train_model(epochs=20, init_learning_rate=0.0001, batch_size=8, dataset=r'dataset_forSegNet_ExtractNet_CCSEDB')
+    model = TrainExtractNet(dataset='CCSEDB')
+    model.train_model(epochs=20, init_learning_rate=0.0001, batch_size=8)

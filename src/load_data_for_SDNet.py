@@ -6,6 +6,7 @@ import os.path
 import matplotlib.pyplot as plt
 import numpy as np
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+from project_paths import raw_dataset_dir
 
 '''
 Load input data for SDNet
@@ -89,7 +90,7 @@ def load_dict(name):
 
 
 if __name__ == '__main__':
-    c = SDNetLoader(is_training=False, dataset_path='dataset/CCSEDB')
+    c = SDNetLoader(is_training=False, dataset_path=str(raw_dataset_dir('CCSEDB')))
     data_loader = data.DataLoader(c, batch_size=8, shuffle=False)
 
     for i in range(10):

@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn.functional as F
 from content_net_model.model_of_contentNet import ContentNet
 import os
+from project_paths import MODEL_ROOT
 '''
 Loss functions and qualitative evaluation functions used in training and validating.
 '''
@@ -35,7 +36,7 @@ class ContentLoss(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = ContentNet(embedding1_length=512, embedding2_length=256)
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'content_net_model/out/model_content.pth')
+        model_path = MODEL_ROOT / 'content_net' / 'out' / 'model_content.pth'
         self.__load_model(model_path)
         self.eval().requires_grad_(False)
 

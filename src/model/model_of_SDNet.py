@@ -5,7 +5,9 @@ from torch.distributions.normal import Normal
 import os
 from char_recognise.model import CharRecognise
 import numpy as np
-char_model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), r'../char_recognise/out_vgg_bn/model/model.th')
+from project_paths import MODEL_ROOT
+
+char_model_path = MODEL_ROOT / 'char_recognise' / 'out_vgg_bn' / 'model' / 'model.th'
 
 
 #######################################################################
@@ -32,7 +34,7 @@ class SDNet(nn.Module):
 
         # coordinate matrices
         vectors = [torch.arange(0, s) for s in [256, 256]]
-        coordinate = torch.meshgrid(vectors)
+        coordinate = torch.meshgrid(vectors, indexing='ij')
         coordinate = torch.stack(coordinate)[[1, 0]].float()  # y, x 调整为x,y
         self.coordinate = coordinate.numpy()
 
@@ -55,15 +57,16 @@ class SDNet(nn.Module):
         @return:
         '''
         grid_ = (grid.detach().to('cpu').numpy()+1)*127.5
-        x = np.array([grid_[0, :, 0, 0], grid_[0, :, 0, 255], grid_[0, :, 255, 0]], dtype=np.float)
-        y = np.array([[0, 0], [255, 0], [0, 255]], dtype=np.float)
-        expand = np.ones(shape=(3, 1), dtype=np.float)
+        # NumPy 2.x removed legacy aliases such as np.float and np.int.
+        x = np.array([grid_[0, :, 0, 0], grid_[0, :, 0, 255], grid_[0, :, 255, 0]], dtype=np.float32)
+        y = np.array([[0, 0], [255, 0], [0, 255]], dtype=np.float32)
+        expand = np.ones(shape=(3, 1), dtype=np.float32)
         x = np.concatenate([x, expand], axis=1)
         map = np.dot(np.linalg.inv(x), y)
-        grid_base = self.coordinate.reshape((2, -1)).transpose((1, 0)).astype(np.float)
-        grid_base = np.concatenate([grid_base, np.ones(shape=(256*256, 1), dtype=np.float)], axis=1)
-        d_grid = np.round(np.dot(grid_base, map)).astype(np.int)
-        d_grid = np.clip(d_grid[:, ], 0, 255).reshape((1, 256, 256, 2)).transpose((0, 3, 1, 2 )).astype(np.float)
+        grid_base = self.coordinate.reshape((2, -1)).transpose((1, 0)).astype(np.float32)
+        grid_base = np.concatenate([grid_base, np.ones(shape=(256*256, 1), dtype=np.float32)], axis=1)
+        d_grid = np.round(np.dot(grid_base, map)).astype(np.int32)
+        d_grid = np.clip(d_grid[:, ], 0, 255).reshape((1, 256, 256, 2)).transpose((0, 3, 1, 2 )).astype(np.float32)
         d_grid = d_grid / 127.5 - 1
         return torch.from_numpy(d_grid).float().cuda()
 
@@ -184,7 +187,7 @@ class SpatialTransformer(nn.Module):
 
         # Create sampling grid
         vectors = [torch.arange(0, s) for s in size]
-        grids = torch.meshgrid(vectors)
+        grids = torch.meshgrid(vectors, indexing='ij')
         grid = torch.stack(grids)[[1, 0]]
         grid = torch.unsqueeze(grid, 0)  # add batch
         grid = grid.type(torch.FloatTensor)
@@ -209,7 +212,7 @@ class SpatialTransformer(nn.Module):
 
         if len(shape) == 2:
             new_locs = new_locs.permute(0, 2, 3, 1)
-        return F.grid_sample(src, new_locs, mode=self.mode), new_locs
+        return F.grid_sample(src, new_locs, mode=self.mode, align_corners=False), new_locs
 
 
 class UNetWithFeature(nn.Module):

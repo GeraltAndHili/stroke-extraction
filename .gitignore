@@ -1,0 +1,12 @@
+.idea/
+__pycache__/
+*.pyc
+
+data/dataset/RHSEDB/
+data/dataset/cha_strokes/
+data/prepared/
+data/dataset/data_anal/*
+!data/dataset/data_anal/image_to_npy_guide.md
+
+artifacts/
+logs/
