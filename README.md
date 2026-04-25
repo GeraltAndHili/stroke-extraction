@@ -25,7 +25,7 @@ Run `python src/main_train.py` to train the whole stroke extraction model. Or ru
 to train a single module selectively.
 
 For continued training from the current baseline checkpoints without overwriting the base outputs, run:
-`python src/main_finetune.py --dataset RHSEDB --run-tag newchars_v1`
+`python src/main_finetune.py --dataset NPZ4_1_replay_1x --run-tag newchars_v1`
 This writes new checkpoints and generated intermediate data to versioned directories instead of reusing the baseline paths.
 
 ## Project Layout
