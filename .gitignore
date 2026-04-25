@@ -4,6 +4,7 @@ __pycache__/
 
 data/dataset/RHSEDB/
 data/dataset/NPZ4_1/
+data/dataset/NPZ4_1_replay_1x/
 data/dataset/cha_strokes/
 data/prepared/
 data/dataset/data_anal/*
