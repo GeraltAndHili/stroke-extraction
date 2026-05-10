@@ -1,0 +1,28 @@
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Trained weights
+char_recognise/out_vgg_bn/model/*.pth
+content_net_model/out/*.pth
+model/*.pth
+
+# Generated training artifacts
+out/
+dataset_forSegNet_ExtractNet_*/
+
+# Dataset payloads
+dataset/**/*.npz
+
+# Keep lightweight documentation and split metadata
+!dataset/Introduction of RHSEDB.md
+!dataset/npz_4_1/
+!dataset/npz_4_1/split_manifest.csv
+!dataset/npz_4_1/split_summary.json

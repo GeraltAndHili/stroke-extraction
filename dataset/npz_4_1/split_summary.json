@@ -1,0 +1,12 @@
+{
+  "total": 1852,
+  "train_count": 1481,
+  "test_count": 371,
+  "unique_characters": 451,
+  "seed": 42,
+  "train_ratio": 0.8,
+  "link_mode_requested": "hardlink",
+  "link_mode_actual_counts": {
+    "hardlink": 1852
+  }
+}
